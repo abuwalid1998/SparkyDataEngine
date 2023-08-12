@@ -1,15 +1,44 @@
 package com.SparkyDataEngine.SparkyDataEngine.DataServices;
 
 
-import com.SparkyDataEngine.SparkyDataEngine.Models.InputData;
-import com.SparkyDataEngine.SparkyDataEngine.Models.OutMessage;
+import com.SparkyDataEngine.SparkyDataEngine.Models.*;
+import com.SparkyDataEngine.SparkyDataEngine.Tools.WordsVector;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
 import org.springframework.stereotype.Service;
+import weka.classifiers.Classifier;
+import weka.classifiers.functions.Logistic;
+import weka.core.DenseInstance;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.SerializationHelper;
+import weka.core.converters.ConverterUtils;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.StringToWordVector;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
+import weka.classifiers.bayes.NaiveBayes;
+import weka.core.Instances;
+import weka.core.SerializationHelper;
+import weka.core.converters.ConverterUtils.DataSource;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.StringToWordVector;
 
+import java.io.File;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -19,14 +48,21 @@ public class DataEngine {
     //the data is in .CSV file , Sql database , External API'S
     //Example to import .CSV file and Arrange the data form Large to small businesses
 
-    public OutMessage ArrangeData(InputData data){
+    final
+    WordsVector wordsVector;
+
+    public DataEngine(WordsVector wordsVector) {
+        this.wordsVector = wordsVector;
+    }
+
+    public OutMessage ArrangeData(InputData data) {
 
 
         try {
 
-            System.out.println(">>>>>>>>>>>>>>>>>"+data.getSparkConfig());
+            System.out.println(">>>>>>>>>>>>>>>>>" + data.getSparkConfig());
 
-            SparkSession  spark = SparkSession.builder()
+            SparkSession spark = SparkSession.builder()
                     .appName(data.getAppName())
                     .master(data.getSparkConfig())
                     .getOrCreate();
@@ -37,8 +73,8 @@ public class DataEngine {
                     .csv(data.getFilePath());
 
 
-            if (data.getFunction() == 1){
-                Dataset<Row>  sortedData = financialData.select(data.getName(), data.getValueCol())
+            if (data.getFunction() == 1) {
+                Dataset<Row> sortedData = financialData.select(data.getName(), data.getValueCol())
                         .orderBy(functions.col(data.getValueCol()).desc());
                 sortedData.show();
 
@@ -49,8 +85,8 @@ public class DataEngine {
                         .csv(outputCsvPath);
 
 
-            }else{
-                Dataset<Row>  sortedData = financialData.select(data.getName(), data.getValueCol())
+            } else {
+                Dataset<Row> sortedData = financialData.select(data.getName(), data.getValueCol())
                         .orderBy(functions.col(data.getValueCol()).asc());
                 sortedData.show();
 
@@ -59,9 +95,9 @@ public class DataEngine {
             // Stop the SparkSession
             spark.stop();
 
-            return new OutMessage("Data Arranged Succssfully","No Errors Found",true);
+            return new OutMessage("Data Arranged Succssfully", "No Errors Found", true);
 
-        }catch (Exception e) {
+        } catch (Exception e) {
 
             return new OutMessage("Data Not Arranged Error Found", e.getMessage(), false);
 
@@ -72,7 +108,7 @@ public class DataEngine {
         try {
 
 
-            SparkSession  spark = SparkSession.builder()
+            SparkSession spark = SparkSession.builder()
                     .appName(indata.getAppName())
                     .master(indata.getSparkConfig())
                     .getOrCreate();
@@ -96,9 +132,6 @@ public class DataEngine {
 
             int maxMissingValues = 2;
             data = data.na().drop(maxMissingValues);
-
-
-
             // Save the processed data to a new CSV file
             String outputCsvPath = "Results//CleanedData.csv";
             data.coalesce(1).write()
@@ -108,16 +141,216 @@ public class DataEngine {
             // Stop the SparkSession
             spark.stop();
 
-            return new OutMessage("Data Cleaned","No Errors",true);
+            return new OutMessage("Data Cleaned", "No Errors", true);
 
-        }catch (Exception e){
+        } catch (Exception e) {
 
-        return new OutMessage("Data Not Cleaned",e.getMessage(),false);
+            return new OutMessage("Data Not Cleaned", e.getMessage(), false);
 
         }
 
 
+    }
 
+
+    public OutMessage ArrangeNews(News news) {
+
+
+        try {
+
+            SparkSession spark = SparkSession.builder()
+                    .appName(news.getAppName())
+                    .master(news.getSparkConfig().getHost())
+                    .getOrCreate();
+
+            Dataset<Row> data = spark.read()
+                    .option("header", true)
+                    .csv(news.getFilePath());
+
+            List<String> columnsToHandleList = news.getHeaders();
+
+            String[] columnsToHandle = columnsToHandleList.toArray(new String[0]);
+
+            for (String column : columnsToHandle) {
+                data = data.withColumn(column, functions.when(data.col(column).isNull(), 0).otherwise(data.col(column)));
+            }
+
+            int maxMissingValues = 2;
+
+            data = data.na().drop(maxMissingValues);
+            // Save the processed data to a new CSV file
+            String outputCsvPath = "Results//CleanedData";
+
+            data.coalesce(1).write()
+                    .option("header", true)
+                    .csv(outputCsvPath);
+
+
+            RenameFile(outputCsvPath);
+            // Stop the SparkSession
+            spark.stop();
+
+            return new OutMessage("News Arranged And Cleaned Successfully", "No Errors", true);
+
+        } catch (Exception e) {
+
+            return new OutMessage("News Not Arranged", e.getMessage(), false);
+
+        }
+
+    }
+
+    private void RenameFile(String outputpath) throws IOException {
+        // Replace with your HDFS configuration
+        Configuration configuration = new Configuration();
+        Path outputCsvPath = new Path(outputpath);
+
+        FileSystem fs = FileSystem.get(configuration);
+
+        // List files in the output directory
+        FileStatus[] fileStatuses = fs.listStatus(outputCsvPath);
+
+        // Find the most recent file
+        Path latestFile = Arrays.stream(fileStatuses)
+                .filter(FileStatus::isFile)
+                .max(Comparator.comparingLong(FileStatus::getModificationTime))
+                .map(FileStatus::getPath)
+                .orElse(null);
+
+        if (latestFile != null) {
+            // Rename the most recent file to "result.csv"
+            Path dest = new Path(outputCsvPath, "result.csv");
+            fs.rename(latestFile, dest);
+        }
+
+        fs.close();
+    }
+
+
+    public OutMessage setWordsVector(News news) {
+        try {
+
+            wordsVector.RunWord2VecModel(news.getFilePath());
+
+            return new OutMessage("Trainee Data .txt file Created Succssfully", "No Errors", true);
+
+        } catch (Exception e) {
+
+            return new OutMessage("Trainee Data .txt file  Not Created Succssfully", e.getMessage(), false);
+        }
+    }
+
+
+    public OutMessage PrepareARFFfile(TraineeData data) {
+        try {
+
+            String arffFilePath = "src/main/resources/result/preprocessed_dataset.arff";
+
+            wordsVector.convertCsvToArff(data.getDatapath(), arffFilePath);
+
+            return new OutMessage("ARFF FILE SAVED", "No Errors", true);
+
+        } catch (Exception e) {
+
+            e.getStackTrace();
+            e.printStackTrace();
+
+            return new OutMessage("ARFF FILE NOT SAVED", e.getMessage(), false);
+
+        }
+    }
+
+
+    public OutMessage TextClassification(FileToClass file) throws Exception {
+
+        try {
+
+            // Load the pre-trained classifier model
+            Classifier classifier = (Classifier) SerializationHelper.read("result/preprocessed_dataset.arff");
+
+            // Load the ARFF file for attribute configuration
+            BufferedReader arffReader = new BufferedReader(new FileReader("result/preprocessed_dataset.arff"));
+            Instances attributeStructure = new Instances(arffReader);
+            arffReader.close();
+
+            // Read CSV file and process data
+            BufferedReader csvReader = new BufferedReader(new FileReader(file.getFilepath()));
+            String line;
+            ArrayList<String> results = new ArrayList<>();
+
+            while ((line = csvReader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length > 0) {
+                    // Get the index of the column containing the text to classify
+                    int columnIndex = attributeStructure.attribute(file.getTargetHeader()).index();
+
+                    // Create an instance and set the text attribute
+                    Instance instance = new DenseInstance(attributeStructure.numAttributes());
+                    instance.setDataset(attributeStructure);
+                    instance.setValue(columnIndex, parts[columnIndex]);
+
+                    // Classify the instance
+                    double prediction = classifier.classifyInstance(instance);
+                    String predictedClass = attributeStructure.classAttribute().value((int) prediction);
+
+                    // Store the result
+                    results.add(predictedClass);
+                }
+            }
+
+            csvReader.close();
+
+            // Save the results to a new CSV file
+            FileWriter writer = new FileWriter("src/main/resources/result/results.csv");
+            writer.write("Predicted Class\n");
+            for (String result : results) {
+                writer.write(result + "\n");
+            }
+            writer.close();
+            return new OutMessage("File Classified", "", true);
+        }
+
+    catch(Exception e)
+    {
+        return new OutMessage("File Not Classified", e.getMessage(), false);
+    }
+}
+
+
+    public OutMessage ClassModel() {
+        try {
+
+            String arffFilePath = "src/main/resources/result/preprocessed_dataset.arff";
+
+            String outputpath = "src/main/resources/result/preprocessed_dataset_output.arff";
+
+            ConverterUtils.DataSource source = new ConverterUtils.DataSource(arffFilePath);
+            Instances data = source.getDataSet();
+            data.setClassIndex(data.numAttributes() - 1);
+
+            StringToWordVector filter = new StringToWordVector();
+            filter.setInputFormat(data);
+            Instances filteredData = Filter.useFilter(data, filter);
+
+            int trainSize = (int) Math.round(filteredData.numInstances() * 0.8);
+            int testSize = filteredData.numInstances() - trainSize;
+
+            Instances trainData = new Instances(filteredData, 0, trainSize);
+            Instances testData = new Instances(filteredData, trainSize, testSize);
+
+            Classifier classifier = new Logistic();
+            classifier.buildClassifier(trainData);
+
+             // Save the trained model
+            SerializationHelper.write("trained_model.model", classifier);
+
+
+            return new OutMessage("Model Created Successfully", "", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new OutMessage("Model Not Created Successfully", e.getMessage(), false);
+        }
+    }
 
     }
 
@@ -125,7 +358,3 @@ public class DataEngine {
 
 
 
-
-
-
-}
