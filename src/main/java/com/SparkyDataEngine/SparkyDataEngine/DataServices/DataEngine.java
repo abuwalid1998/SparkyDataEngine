@@ -1,8 +1,10 @@
 package com.SparkyDataEngine.SparkyDataEngine.DataServices;
 
 
-import com.SparkyDataEngine.SparkyDataEngine.Models.*;
-import com.SparkyDataEngine.SparkyDataEngine.Tools.WordsVector;
+import com.SparkyDataEngine.SparkyDataEngine.Models.FileToClass;
+import com.SparkyDataEngine.SparkyDataEngine.Models.InputData;
+import com.SparkyDataEngine.SparkyDataEngine.Models.News;
+import com.SparkyDataEngine.SparkyDataEngine.Models.OutMessage;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -13,24 +15,10 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
 import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
-import weka.classifiers.functions.Logistic;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
-import weka.core.converters.ConverterUtils;
-import weka.filters.Filter;
-import weka.filters.unsupervised.attribute.StringToWordVector;
-import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
-import weka.classifiers.bayes.NaiveBayes;
-import weka.core.Instances;
-import weka.core.SerializationHelper;
-import weka.core.converters.ConverterUtils.DataSource;
-import weka.filters.Filter;
-import weka.filters.unsupervised.attribute.StringToWordVector;
-
-import java.io.File;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -50,7 +38,7 @@ public class DataEngine {
 
 
     public DataEngine() {
-        this.wordsVector = wordsVector;
+
     }
 
     public OutMessage ArrangeData(InputData data) {
@@ -225,39 +213,6 @@ public class DataEngine {
     }
 
 
-    public OutMessage setWordsVector(News news) {
-        try {
-
-            wordsVector.RunWord2VecModel(news.getFilePath());
-
-            return new OutMessage("Trainee Data .txt file Created Succssfully", "No Errors", true);
-
-        } catch (Exception e) {
-
-            return new OutMessage("Trainee Data .txt file  Not Created Succssfully", e.getMessage(), false);
-        }
-    }
-
-
-    public OutMessage PrepareARFFfile(TraineeData data) {
-        try {
-
-            String arffFilePath = "src/main/resources/result/preprocessed_dataset.arff";
-
-            wordsVector.convertCsvToArff(data.getDatapath(), arffFilePath);
-
-            return new OutMessage("ARFF FILE SAVED", "No Errors", true);
-
-        } catch (Exception e) {
-
-            e.getStackTrace();
-            e.printStackTrace();
-
-            return new OutMessage("ARFF FILE NOT SAVED", e.getMessage(), false);
-
-        }
-    }
-
 
     public OutMessage TextClassification(FileToClass file) throws Exception {
 
@@ -315,40 +270,6 @@ public class DataEngine {
 }
 
 
-    public OutMessage ClassModel() {
-        try {
-
-            String arffFilePath = "src/main/resources/result/preprocessed_dataset.arff";
-
-            String outputpath = "src/main/resources/result/preprocessed_dataset_output.arff";
-
-            ConverterUtils.DataSource source = new ConverterUtils.DataSource(arffFilePath);
-            Instances data = source.getDataSet();
-            data.setClassIndex(data.numAttributes() - 1);
-
-            StringToWordVector filter = new StringToWordVector();
-            filter.setInputFormat(data);
-            Instances filteredData = Filter.useFilter(data, filter);
-
-            int trainSize = (int) Math.round(filteredData.numInstances() * 0.8);
-            int testSize = filteredData.numInstances() - trainSize;
-
-            Instances trainData = new Instances(filteredData, 0, trainSize);
-            Instances testData = new Instances(filteredData, trainSize, testSize);
-
-            Classifier classifier = new Logistic();
-            classifier.buildClassifier(trainData);
-
-             // Save the trained model
-            SerializationHelper.write("trained_model.model", classifier);
-
-
-            return new OutMessage("Model Created Successfully", "", true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new OutMessage("Model Not Created Successfully", e.getMessage(), false);
-        }
-    }
 
     }
 
