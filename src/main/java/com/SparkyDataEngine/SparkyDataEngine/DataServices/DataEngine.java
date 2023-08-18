@@ -48,10 +48,8 @@ public class DataEngine {
     //the data is in .CSV file , Sql database , External API'S
     //Example to import .CSV file and Arrange the data form Large to small businesses
 
-    final
-    WordsVector wordsVector;
 
-    public DataEngine(WordsVector wordsVector) {
+    public DataEngine() {
         this.wordsVector = wordsVector;
     }
 
