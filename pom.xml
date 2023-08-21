@@ -30,6 +30,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.tensorflow</groupId>
+			<artifactId>tensorflow</artifactId>
+			<version>1.15.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>nz.ac.waikato.cms.weka</groupId>
 			<artifactId>weka-stable</artifactId>
 			<version>3.8.6</version>
@@ -114,6 +120,12 @@
 			<artifactId>hadoop-client-runtime</artifactId>
 			<version>3.3.2</version>
 		</dependency>
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-api</artifactId>
+            <version>1.0.0-beta7</version>
+        </dependency>
+
 	</dependencies>
 
 	<build>

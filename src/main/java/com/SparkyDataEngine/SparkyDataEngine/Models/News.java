@@ -14,14 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class News {
 
-    private SparkConfig sparkConfig;
 
-    private List<String> headers;
-
-    private String filePath;
-
-    private  String appName;
-
-    private boolean readHeaders;
+    private String title;
 
 }
