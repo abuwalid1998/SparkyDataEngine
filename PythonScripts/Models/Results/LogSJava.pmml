@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PMML xmlns="http://www.dmg.org/PMML-4_4" xmlns:data="http://jpmml.org/jpmml-model/InlineTable" version="4.4">
+	<Header>
+		<Application name="SkLearn2PMML package" version="0.97.3"/>
+		<Timestamp>2023-08-22T20:01:14Z</Timestamp>
+	</Header>
+	<DataDictionary>
+		<DataField name="y" optype="continuous" dataType="double"/>
+		<DataField name="MolWt" optype="continuous" dataType="double"/>
+		<DataField name="MolLogP" optype="continuous" dataType="double"/>
+		<DataField name="NumRotatableBonds" optype="continuous" dataType="double"/>
+		<DataField name="AromaticProportion" optype="continuous" dataType="double"/>
+	</DataDictionary>
+	<RegressionModel functionName="regression" algorithmName="sklearn.linear_model._base.LinearRegression">
+		<MiningSchema>
+			<MiningField name="y" usageType="target"/>
+			<MiningField name="MolWt"/>
+			<MiningField name="MolLogP"/>
+			<MiningField name="NumRotatableBonds"/>
+			<MiningField name="AromaticProportion"/>
+		</MiningSchema>
+		<RegressionTable intercept="0.2876504483202007">
+			<NumericPredictor name="MolWt" coefficient="-0.006744585069742106"/>
+			<NumericPredictor name="MolLogP" coefficient="-0.7371191593865788"/>
+			<NumericPredictor name="NumRotatableBonds" coefficient="0.004570225207748627"/>
+			<NumericPredictor name="AromaticProportion" coefficient="-0.4463169069212439"/>
+		</RegressionTable>
+	</RegressionModel>
+</PMML>
