@@ -1,10 +1,10 @@
 package com.SparkyDataEngine.SparkyDataEngine.Controller;
 
-
 import com.SparkyDataEngine.SparkyDataEngine.DataServices.DataEngine;
 import com.SparkyDataEngine.SparkyDataEngine.DataServices.SentimentAnalysisService;
-import com.SparkyDataEngine.SparkyDataEngine.Models.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/SparkyEngine")
@@ -23,20 +23,15 @@ public class EngineController {
 
 
     @GetMapping("/GetData")
-    public void GetData(){
+    public void GetData() {
         System.out.println("Im here >>>> Getting Data");
     }
 
 
-    @PostMapping("/CleanData")
-    public void CleanData(@RequestParam("data") String data) {
-        dataEngine.CleanDataFile(data);
-    }
+    @GetMapping("/Get")
+    public void GetModelPrediction() throws Exception {
 
-
-    @PostMapping("/Classification")
-    public double Classifications(@RequestBody News article) throws Exception {
-        return service.predictSentiment(article.getTitle());
     }
 
 }
+

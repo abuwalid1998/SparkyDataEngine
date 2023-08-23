@@ -63,7 +63,6 @@ public class DataEngine {
     }
 
 
-
     public OutMessage TextClassification(News news) throws Exception {
 
 
@@ -93,38 +92,7 @@ public class DataEngine {
     }
 
 
-     //Clean Data from null values and return them as a csv file
-    public void CleanDataFile(String filepath) {
 
-        String outputFilePath = "CleanedData/FinalCleanedFile.csv";
-
-        try {
-
-            CSVReader reader = new CSVReader(new FileReader(filepath));
-            CSVWriter writer = new CSVWriter(new FileWriter(outputFilePath)) ;
-
-
-            writer.writeNext(reader.readNext());
-
-            String[] nextLine;
-            while ((nextLine = reader.readNext()) != null) {
-                int numZeros = 0;
-                for (int columnIndex = 2; columnIndex < nextLine.length; columnIndex++) {
-                    if (nextLine[columnIndex].isEmpty()) {
-                        numZeros++;
-                    }
-                }
-                if (numZeros == 15)
-                {
-                    writer.writeNext(nextLine);
-                }
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
 
 

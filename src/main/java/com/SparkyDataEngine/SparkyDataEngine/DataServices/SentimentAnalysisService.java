@@ -18,8 +18,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SentimentAnalysisService {
-    private final String modelPath = "C:\\Users\\PC\\OneDrive\\Desktop\\SparkyDataEngine\\TrainedModels\\saved_model"; // Path to the SavedModel directory
-    private final String servingDefaultSignature = "serving_default"; // Use the available signature name
+    private final String modelPath = "modelpath"; // Path to the SavedModel directory
 
     private final SavedModelBundle model = SavedModelBundle.load(modelPath, "serve");
 
@@ -29,6 +28,8 @@ public class SentimentAnalysisService {
             runner = model.session().runner();
 
             MetaGraphDef metaGraphDef = MetaGraphDef.parseFrom(model.metaGraphDef());
+            // Use the available signature name
+            String servingDefaultSignature = "serving_default";
             SignatureDef signatureDef = metaGraphDef.getSignatureDefOrThrow(servingDefaultSignature);
 
             String inputTensorName = "embedding_input:0"; // Update with the actual input tensor name

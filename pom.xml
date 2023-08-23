@@ -125,6 +125,31 @@
             <artifactId>nd4j-api</artifactId>
             <version>1.0.0-beta7</version>
         </dependency>
+		<!-- JPMML-Evaluator dependency -->
+		<dependency>
+			<groupId>org.jpmml</groupId>
+			<artifactId>pmml-evaluator</artifactId>
+			<version>1.6.4</version>
+		</dependency>
+
+		<!-- JPMML-SkLearn dependency for Scikit-Learn model support -->
+		<dependency>
+			<groupId>org.jpmml</groupId>
+			<artifactId>pmml-sklearn</artifactId>
+			<version>1.7.37</version>
+		</dependency>
+
+		<!-- JPMML-Model dependency for PMML model support -->
+		<dependency>
+			<groupId>org.jpmml</groupId>
+			<artifactId>pmml-model</artifactId>
+			<version>1.6.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jpmml</groupId>
+			<artifactId>pmml-converter</artifactId>
+			<version>1.5.5</version>
+		</dependency>
 
 	</dependencies>
 
